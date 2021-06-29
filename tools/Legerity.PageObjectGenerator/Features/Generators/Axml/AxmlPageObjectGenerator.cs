@@ -1,4 +1,4 @@
-namespace Legerity.PageObjectGenerator.Features.Generators.Xaml
+namespace Legerity.PageObjectGenerator.Features.Generators.Axml
 {
     using System;
     using System.Collections.Generic;
@@ -14,81 +14,59 @@ namespace Legerity.PageObjectGenerator.Features.Generators.Xaml
     using Models;
     using Scriban;
 
-    public class XamlPageObjectGenerator : IPageObjectGenerator
+    public class AxmlPageObjectGenerator : IPageObjectGenerator
     {
-        private const string XamlNamespace = "http://schemas.microsoft.com/winfx/2006/xaml";
+        private const string AndroidNamespace = "http://schemas.android.com/apk/res/android";
 
-        private const string BaseElementType = "WindowsElement";
+        private const string BaseElementType = "AndroidElement";
 
         private static readonly GenericEqualityComparer<string> SimpleStringComparer = new(s => s.ToLower());
 
-        public static IEnumerable<string> SupportedCoreWindowsElements => new List<string>
+        public static IEnumerable<string> SupportedCoreAndroidElements => new List<string>
         {
-            "AppBarButton",
-            "AppBarToggleButton",
-            "AutoSuggestBox",
             "Button",
-            "CalendarDatePicker",
-            "CalendarView",
             "CheckBox",
-            "ComboBox",
-            "CommandBar",
             "DatePicker",
-            "FlipView",
-            "GridView",
-            "Hub",
-            "HyperlinkButton",
-            "InkToolbar",
-            "ListBox",
-            "ListView",
-            "MenuFlyoutItem",
-            "MenuFlyoutSubItem",
-            "PasswordBox",
-            "Pivot",
-            "ProgressBar",
-            "ProgressRing",
+            "EditText",
             "RadioButton",
-            "Slider",
-            "TextBlock",
-            "TextBox",
-            "TimePicker",
-            "ToggleButton",
-            "ToggleSwitch"
+            "Spinner",
+            "Switch",
+            "TextView",
+            "ToggleButton"
         };
 
         public async Task GenerateAsync(string searchFolder, string outputFolder)
         {
-            IEnumerable<string> filePaths = GetXamlFilePaths(searchFolder);
+            IEnumerable<string> filePaths = GetAxmlFilePaths(searchFolder);
 
             foreach (string filePath in filePaths)
             {
                 ConsoleEventLogger.Current.WriteInfo($"Processing {filePath}");
 
                 await using FileStream fileStream = File.Open(filePath, FileMode.Open);
-                var xaml = XDocument.Load(fileStream);
+                var axml = XDocument.Load(fileStream);
 
-                if (xaml.Root != null && xaml.Root.Name.ToString().Contains("Page"))
+                if (axml.Root != null)
                 {
-                    var templateData = new GeneratorTemplateData(Path.GetFileNameWithoutExtension(filePath), "Windows", BaseElementType);
+                    var templateData = new GeneratorTemplateData(Path.GetFileNameWithoutExtension(filePath), "Android", BaseElementType);
 
                     ConsoleEventLogger.Current.WriteInfo($"Generating template for {templateData}");
 
-                    IEnumerable<XElement> elements = this.FlattenElements(xaml.Root.Elements());
+                    IEnumerable<XElement> elements = this.FlattenElements(axml.Root.Elements()).Where(element => element != null);
+
                     foreach (XElement element in elements)
                     {
-                        string automationId = element.Attribute("AutomationProperties.AutomationId")?.Value;
-                        string uid = element.Attribute(XName.Get("Uid", XamlNamespace))?.Value;
-                        string name = element.Attribute(XName.Get("Name", XamlNamespace))?.Value;
+                        string id = RemoveAndroidIdReference(element.Attribute(XName.Get("id", AndroidNamespace))?.Value);
+                        string contentDesc = element.Attribute(XName.Get("contentDescription", AndroidNamespace))?.Value;
 
-                        string byQueryType = GetByQueryType(uid, automationId, name);
+                        string byQueryType = GetByQueryType(id, contentDesc);
 
                         if (byQueryType.IsNullOrWhiteSpace())
                         {
                             continue;
                         }
 
-                        string wrapperAutomationId = uid ?? automationId;
-                        string byQueryValue = wrapperAutomationId ?? name;
+                        string byQueryValue = id ?? contentDesc;
 
                         var uiElement = new UiElement(this.GetElementWrapperType(element.Name.LocalName),
                             byQueryValue.Capitalize(),
@@ -110,6 +88,11 @@ namespace Legerity.PageObjectGenerator.Features.Generators.Xaml
             }
         }
 
+        private static string RemoveAndroidIdReference(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? null : value.Replace("+", string.Empty).Replace("@id/", string.Empty);
+        }
+
         private static async Task GeneratePageObjectClassFileAsync(
             GeneratorTemplateData templateData,
             string outputFolder)
@@ -127,34 +110,34 @@ namespace Legerity.PageObjectGenerator.Features.Generators.Xaml
             }
         }
 
-        private static string GetByQueryType(string uid, string automationId, string name)
+        private static string GetByQueryType(string id, string contentDesc)
         {
-            if (!uid.IsNullOrWhiteSpace() || !automationId.IsNullOrWhiteSpace())
+            if (!id.IsNullOrWhiteSpace())
             {
-                return "AutomationId";
+                return "Id";
             }
 
-            return !name.IsNullOrWhiteSpace() ? "Name" : null;
+            return !contentDesc.IsNullOrWhiteSpace() ? "AndroidContentDesc" : null;
         }
 
-        private static IEnumerable<string> GetXamlFilePaths(string searchFolder)
+        private static IEnumerable<string> GetAxmlFilePaths(string searchFolder)
         {
             string[] filePaths = default;
 
             try
             {
-                filePaths = Directory.GetFiles(searchFolder, "*.xaml", SearchOption.AllDirectories);
+                filePaths = Directory.GetFiles(searchFolder, "*.axml", SearchOption.AllDirectories);
             }
             catch (UnauthorizedAccessException uae)
             {
                 ConsoleEventLogger.Current.WriteError(
-                    "An error occurred while retrieving XAML files for processing",
+                    "An error occurred while retrieving AXML files for processing",
                     uae);
             }
 
             if (filePaths is { Length: <= 0 })
             {
-                ConsoleEventLogger.Current.WriteWarning("No XAML files were found for processing");
+                ConsoleEventLogger.Current.WriteWarning("No AXML files were found for processing");
             }
 
             return filePaths;
@@ -162,7 +145,7 @@ namespace Legerity.PageObjectGenerator.Features.Generators.Xaml
 
         private string GetElementWrapperType(string elementName)
         {
-            return SupportedCoreWindowsElements.Contains(elementName, SimpleStringComparer) ? elementName : BaseElementType;
+            return SupportedCoreAndroidElements.Contains(elementName, SimpleStringComparer) ? elementName : BaseElementType;
         }
 
         private IEnumerable<XElement> FlattenElements(IEnumerable<XElement> elements)

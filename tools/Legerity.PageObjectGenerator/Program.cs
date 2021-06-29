@@ -4,6 +4,7 @@ namespace Legerity.PageObjectGenerator
     using System.Threading.Tasks;
     using CommandLine;
     using Features;
+    using Features.Generators.Axml;
     using Features.Generators.Xaml;
     using Infrastructure.Configuration;
     using Infrastructure.Logging;
@@ -35,6 +36,7 @@ namespace Legerity.PageObjectGenerator
                             pageObjectGenerator = new XamlPageObjectGenerator();
                             break;
                         case PlatformType.Android:
+                            pageObjectGenerator = new AxmlPageObjectGenerator();
                             break;
                         case PlatformType.Web:
                             break;

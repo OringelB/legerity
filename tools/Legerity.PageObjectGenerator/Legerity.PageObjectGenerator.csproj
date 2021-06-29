@@ -13,10 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\Generators\Extensions\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="Templates\PageObject.template">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
