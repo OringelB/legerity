@@ -7,6 +7,18 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.8.0" />
+    <PackageReference Include="MADE.Data.Validation" Version="1.2.0" />
+    <PackageReference Include="Scriban" Version="4.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\Generators\Extensions\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Templates\PageObject.template">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

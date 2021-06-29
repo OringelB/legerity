@@ -1,9 +1,10 @@
 namespace Legerity.PageObjectGenerator
 {
+    using System.IO;
     using System.Threading.Tasks;
     using CommandLine;
     using Features;
-    using Features.Xaml;
+    using Features.Generators.Xaml;
     using Infrastructure.Configuration;
     using Infrastructure.Logging;
 
@@ -48,7 +49,12 @@ namespace Legerity.PageObjectGenerator
 
                     if (pageObjectGenerator != default)
                     {
-                        await pageObjectGenerator.GenerateAsync();
+                        if (!Directory.Exists(options.Output))
+                        {
+                            Directory.CreateDirectory(options.Output);
+                        }
+
+                        await pageObjectGenerator.GenerateAsync(options.Path, options.Output);
                     }
                     else
                     {

@@ -4,6 +4,6 @@ namespace Legerity.PageObjectGenerator.Features
 
     public interface IPageObjectGenerator
     {
-        Task GenerateAsync();
+        Task GenerateAsync(string searchFolder, string outputFolder);
     }
 }

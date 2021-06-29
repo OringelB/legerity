@@ -1,0 +1,28 @@
+using System;
+using System.Threading;
+
+using Legerity;
+using Legerity.Pages;
+{{- if string.contains platform "Android" }}
+using Legerity.Android.Elements.Core;
+{{- else if string.contains platform "iOS" }}
+using Legerity.IOS.Elements.Core;
+{{- else if string.contains platform "Windows" }}
+using Legerity.Windows.Elements.Core;
+using Legerity.Windows.Extensions;
+{{- end}}
+
+using OpenQA.Selenium;
+using OpenQA.Selenium.Appium.{{platform}};
+using OpenQA.Selenium.Remote;
+
+namespace Legerity.Tests.Pages
+{
+    public class {{page}} : BasePage
+    {
+        protected override By Trait => {{- if string.contains trait.by "Name"}} By.Name("{{trait.value}}"); {{- else if string.contains trait.by "AutomationId"}} ByExtensions.AutomationId("{{trait.value}}"); {{- else if string.contains trait.by "Id"}} By.Id("{{trait.value}}"); {{- end}}
+        {{~ for element in elements }}
+        public {{element.type}} {{element.name}} => App.FindElement({{- if string.contains element.by "Name"}}By.Name("{{element.value}}") {{- else if string.contains element.by "AutomationId"}}ByExtensions.AutomationId("{{element.value}}") {{- else if string.contains element.by "Id"}}By.Id("{{element.value}}") {{- end}}) as {{type}};
+        {{~ end ~}}
+    }
+}
