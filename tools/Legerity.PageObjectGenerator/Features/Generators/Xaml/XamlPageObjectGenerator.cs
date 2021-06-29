@@ -9,6 +9,7 @@ namespace Legerity.PageObjectGenerator.Features.Generators.Xaml
     using System.Xml.Linq;
     using Infrastructure.Extensions;
     using Infrastructure.Logging;
+    using MADE.Collections.Compare;
     using MADE.Data.Validation.Extensions;
     using Models;
     using Scriban;
@@ -16,6 +17,42 @@ namespace Legerity.PageObjectGenerator.Features.Generators.Xaml
     public class XamlPageObjectGenerator : IPageObjectGenerator
     {
         private const string XamlNamespace = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        private static readonly GenericEqualityComparer<string> SimpleStringComparer = new(s => s.ToLower());
+
+        public static IEnumerable<string> SupportedCoreWindowsElements => new List<string>
+        {
+            "AppBarButton",
+            "AppBarToggleButton",
+            "AutoSuggestBox",
+            "Button",
+            "CalendarDatePicker",
+            "CalendarView",
+            "CheckBox",
+            "ComboBox",
+            "CommandBar",
+            "DatePicker",
+            "FlipView",
+            "GridView",
+            "Hub",
+            "HyperlinkButton",
+            "InkToolbar",
+            "ListBox",
+            "ListView",
+            "MenuFlyoutItem",
+            "MenuFlyoutSubItem",
+            "PasswordBox",
+            "Pivot",
+            "ProgressBar",
+            "ProgressRing",
+            "RadioButton",
+            "Slider",
+            "TextBlock",
+            "TextBox",
+            "TimePicker",
+            "ToggleButton",
+            "ToggleSwitch"
+        };
 
         public async Task GenerateAsync(string searchFolder, string outputFolder)
         {
@@ -80,7 +117,7 @@ namespace Legerity.PageObjectGenerator.Features.Generators.Xaml
             string result = await pageObjectTemplate.RenderAsync(templateData);
 
             FileStream output = File.Create(Path.Combine(outputFolder, $"{templateData.Page}.cs"));
-            StreamWriter outputWriter = new StreamWriter(output, Encoding.UTF8);
+            var outputWriter = new StreamWriter(output, Encoding.UTF8);
 
             await using (outputWriter)
             {
@@ -123,7 +160,7 @@ namespace Legerity.PageObjectGenerator.Features.Generators.Xaml
 
         private string GetElementWrapperType(string elementName)
         {
-            return elementName;
+            return SupportedCoreWindowsElements.Contains(elementName, SimpleStringComparer) ? elementName : "WindowsElement";
         }
 
         private IEnumerable<XElement> FlattenElements(IEnumerable<XElement> elements)
